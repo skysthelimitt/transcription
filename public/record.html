@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Website</title>
+		<link rel="preload" as="image" href="assets/record_off.svg" />
+		<link rel="preload" as="image" href="assets/record_on.svg" />
+
+		<link rel="stylesheet" href="style.css" />
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				let recordBtn = document.getElementById("record");
+				if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+					console.log("getUserMedia supported.");
+					navigator.mediaDevices
+						.getUserMedia(
+							// constraints - only audio needed for this app
+							{
+								audio: true,
+							}
+						)
+
+						// Success callback
+						.then((stream) => {
+							console.log("Microphone was enabled, prepare recording.");
+							const mediaRecorder = new MediaRecorder(stream);
+							let chunks = [];
+
+							mediaRecorder.ondataavailable = (e) => {
+								chunks.push(e.data);
+							};
+							mediaRecorder.onstop = (e) => {
+								console.log("processing");
+								const blob = new Blob(chunks, { type: "audio/mp3" });
+								chunks = [];
+								const audioURL = window.URL.createObjectURL(blob);
+								const audio = document.createElement("audio");
+								audio.src = audioURL;
+								audio.setAttribute("controls", "");
+								document.body.appendChild(audio);
+								var reader = new FileReader();
+								reader.readAsDataURL(blob);
+								reader.onloadend = function () {
+									var base64data = reader.result;
+									fetch("/upload", {
+										method: "POST",
+										body: JSON.stringify({"data": base64data}),
+										headers: {
+											"content-type": "application/json"
+										}
+									});
+								};
+							};
+
+							recordBtn.addEventListener("click", () => {
+								recordBtn.setAttribute("record", recordBtn.getAttribute("record") === "false");
+								if (recordBtn.getAttribute("record") === "false") {
+									mediaRecorder.stop();
+									console.log("stopped recording");
+								} else {
+									mediaRecorder.start();
+									console.log("started recording");
+								}
+							});
+						})
+
+						// Error callback
+						.catch((err) => {
+							console.error(`The following getUserMedia error occurred: ${err}`);
+							alert("Did you deny permissions? Reload and try again.");
+						});
+				} else {
+					console.log("getUserMedia not supported on your browser!");
+					alert("Microphone isnt supported???");
+				}
+			});
+		</script>
+	</head>
+	<body>
+		<div class="section">
+			<div id="record" record="false"></div>
+		</div>
+	</body>
+</html>
