@@ -45,10 +45,10 @@
 									var base64data = reader.result;
 									fetch("/upload", {
 										method: "POST",
-										body: JSON.stringify({"data": base64data}),
+										body: JSON.stringify({ data: base64data }),
 										headers: {
-											"content-type": "application/json"
-										}
+											"content-type": "application/json",
+										},
 									});
 								};
 							};
@@ -75,11 +75,37 @@
 					alert("Microphone isnt supported???");
 				}
 			});
+			function demoVideo() {
+				fetch("assets/demo.mp3")
+					.then((response) => response.blob())
+					.then((blob) => {
+						const audioURL = window.URL.createObjectURL(blob);
+						const audio = document.createElement("audio");
+						audio.src = audioURL;
+						audio.setAttribute("controls", "");
+						document.body.appendChild(audio);
+						var reader = new FileReader();
+						reader.readAsDataURL(blob);
+						reader.onloadend = function () {
+							var base64data = reader.result;
+							fetch("/upload", {
+								method: "POST",
+								body: JSON.stringify({ data: base64data }),
+								headers: {
+									"content-type": "application/json",
+								},
+							});
+						};
+					});
+			}
 		</script>
 	</head>
 	<body>
 		<div class="section">
 			<div id="record" record="false"></div>
+			<!-- <button onclick="demoVideo()">
+				Send demo audio (Unit 1 Review Video)
+			</button> -->
 		</div>
 	</body>
 </html>
